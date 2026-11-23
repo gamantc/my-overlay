@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Social Stream Mobile - Chat & Alertas</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome para ícones limpos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        darkbg: '#0b0e14',
+                        panelbg: '#131822',
+                        borderdark: '#1f2937'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-darkbg text-gray-100 font-sans h-[100dvh] w-screen overflow-hidden flex flex-col select-none">
+
+    <!-- Barra Superior Retrátil -->
+    <header id="control-bar" class="bg-panelbg border-b border-borderdark transition-all duration-300 ease-in-out z-30 shrink-0">
+        <!-- Linha principal compacta -->
+        <div class="flex items-center justify-between px-3 py-2 gap-2">
+            <!-- Status / Título -->
+            <div class="flex items-center gap-2 min-w-0">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                <span class="text-xs font-semibold tracking-wide text-gray-200 truncate">Social Stream</span>
+                <span id="session-badge" class="text-[11px] bg-gray-800 text-gray-400 px-2 py-0.5 rounded-md font-mono truncate">
+                    mBtxMN5wZi
+                </span>
+            </div>
+
+            <!-- Botões Rápidos -->
+            <div class="flex items-center gap-1.5 shrink-0">
+                <!-- Botão Wake Lock (Manter Tela Ligada) -->
+                <button id="btn-wakelock" onclick="toggleWakeLock()" title="Manter tela ativa"
+                    class="p-2 rounded-lg bg-gray-800/80 hover:bg-gray-700 text-gray-300 text-xs flex items-center gap-1.5 transition active:scale-95">
+                    <i id="wakelock-icon" class="fa-solid fa-sun text-amber-400"></i>
+                    <span id="wakelock-text" class="hidden sm:inline font-medium">Tela Ativa</span>
+                </button>
+
+                <!-- Botão Recarregar -->
+                <button onclick="reloadFrames()" title="Recarregar Chat e Alertas"
+                    class="p-2 rounded-lg bg-gray-800/80 hover:bg-gray-700 text-gray-300 text-xs transition active:scale-95">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+
+                <!-- Botão Expandir/Recolher Opções -->
+                <button id="btn-toggle-menu" onclick="toggleMenu()" title="Configurações e Proporção"
+                    class="p-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs flex items-center gap-1 transition active:scale-95">
+                    <i id="menu-chevron" class="fa-solid fa-sliders"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Painel Expansível (Proporção & Session ID) -->
+        <div id="expanded-controls" class="hidden px-3 pb-3 pt-1 border-t border-gray-800/80 space-y-3 bg-panelbg">
+            <!-- Seletor de Proporção -->
+            <div>
+                <label class="block text-[11px] uppercase tracking-wider text-gray-400 font-semibold mb-1.5">
+                    Proporção da Tela (Alertas / Chat)
+                </label>
+                <div class="grid grid-cols-4 gap-1.5">
+                    <button onclick="setLayout('30-70')" data-layout="30-70"
+                        class="layout-btn py-2 px-2 rounded-lg text-xs font-medium bg-indigo-600 text-white border border-indigo-500 transition">
+                        30% / 70%
+                    </button>
+                    <button onclick="setLayout('50-50')" data-layout="50-50"
+                        class="layout-btn py-2 px-2 rounded-lg text-xs font-medium bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700 transition">
+                        50% / 50%
+                    </button>
+                    <button onclick="setLayout('0-100')" data-layout="0-100"
+                        class="layout-btn py-2 px-2 rounded-lg text-xs font-medium bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700 transition">
+                        Só Chat
+                    </button>
+                    <button onclick="setLayout('100-0')" data-layout="100-0"
+                        class="layout-btn py-2 px-2 rounded-lg text-xs font-medium bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700 transition">
+                        Só Alertas
+                    </button>
+                </div>
+            </div>
+
+            <!-- Alterar Session ID -->
+            <div>
+                <label for="session-input" class="block text-[11px] uppercase tracking-wider text-gray-400 font-semibold mb-1.5">
+                    Session ID do Social Stream
+                </label>
+                <div class="flex gap-2">
+                    <input type="text" id="session-input" value="mBtxMN5wZi" placeholder="Cole sua Session ID..."
+                        class="flex-1 bg-darkbg border border-gray-700 rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-indigo-500">
+                    <button onclick="updateSession()"
+                        class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs px-4 py-2 rounded-lg transition active:scale-95 shrink-0">
+                        Aplicar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Botão Flutuante para Ocultar/Mostrar a Barra Completamente (Modo Imersivo) -->
+    <button id="btn-immersive" onclick="toggleHeaderVisibility()" title="Ocultar/Mostrar barra superior"
+        class="fixed bottom-3 right-3 z-40 w-9 h-9 rounded-full bg-gray-900/90 border border-gray-700 text-gray-300 shadow-lg flex items-center justify-center hover:bg-gray-800 transition active:scale-90 opacity-60 hover:opacity-100">
+        <i id="immersive-icon" class="fa-solid fa-eye-slash text-xs"></i>
+    </button>
+
+    <!-- Notificação Toast (Substitui alert()) -->
+    <div id="toast" class="fixed top-14 left-1/2 -translate-x-1/2 z-50 bg-gray-900 border border-gray-700 text-white text-xs px-4 py-2 rounded-full shadow-xl opacity-0 pointer-events-none transition-opacity duration-300 flex items-center gap-2">
+        <i id="toast-icon" class="fa-solid fa-circle-info text-indigo-400"></i>
+        <span id="toast-msg">Mensagem</span>
+    </div>
+
+    <!-- Container Principal Dividido (Retrato: Coluna | Paisagem: Linha Invertida para Chat à Esquerda e Alertas à Direita) -->
+    <main id="split-container" class="flex-1 flex flex-col landscape:flex-row-reverse w-full h-full overflow-hidden relative bg-darkbg">
+        
+        <!-- Painel de Alertas / Eventos (Superior em Retrato, Direita em Paisagem) -->
+        <section id="alerts-pane" class="relative w-full h-[30%] landscape:h-full landscape:w-[35%] bg-[#0e121a] border-b landscape:border-b-0 landscape:border-l border-borderdark transition-all duration-300 overflow-hidden">
+            <!-- Etiqueta discreta identificando o painel -->
+            <div class="absolute top-1.5 right-2 z-10 pointer-events-none bg-black/50 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] text-gray-400 font-medium flex items-center gap-1">
+                <i class="fa-solid fa-bell text-amber-400 text-[9px]"></i> Alertas
+            </div>
+            <iframe 
+                id="alerts-frame"
+                src="https://socialstream.ninja/multi-alerts.html?session=mBtxMN5wZi&ln=en-us"
+                class="w-full h-full border-0 bg-[#0e121a]"
+                allow="autoplay; clipboard-write"
+                title="Social Stream Alerts">
+            </iframe>
+        </section>
+
+        <!-- Painel de Chat (Inferior em Retrato, Esquerda em Paisagem) -->
+        <section id="chat-pane" class="relative w-full h-[70%] landscape:h-full landscape:w-[65%] bg-darkbg transition-all duration-300 overflow-hidden">
+            <!-- Etiqueta discreta identificando o painel -->
+            <div class="absolute top-1.5 right-2 z-10 pointer-events-none bg-black/50 backdrop-blur-sm px-2 py-0.5 rounded text-[10px] text-gray-400 font-medium flex items-center gap-1">
+                <i class="fa-solid fa-comments text-indigo-400 text-[9px]"></i> Chat
+            </div>
+            <iframe 
+                id="chat-frame"
+                src="https://socialstream.ninja/dock.html?session=mBtxMN5wZi&ln=en-us"
+                class="w-full h-full border-0 bg-darkbg"
+                allow="autoplay; clipboard-write"
+                title="Social Stream Chat">
+            </iframe>
+        </section>
+
+    </main>
+
+    <script>
+        // Estado da aplicação
+        let currentSession = localStorage.getItem('ssn_session_id') || 'mBtxMN5wZi';
+        let currentLayout = localStorage.getItem('ssn_layout') || '30-70';
+        let wakeLock = null;
+        let isWakeLockActive = false;
+        let isMenuOpen = false;
+        let isHeaderHidden = false;
+
+        // Elementos do DOM
+        const alertsFrame = document.getElementById('alerts-frame');
+        const chatFrame = document.getElementById('chat-frame');
+        const alertsPane = document.getElementById('alerts-pane');
+        const chatPane = document.getElementById('chat-pane');
+        const sessionInput = document.getElementById('session-input');
+        const sessionBadge = document.getElementById('session-badge');
+        const expandedControls = document.getElementById('expanded-controls');
+        const controlBar = document.getElementById('control-bar');
+
+        // Inicialização ao carregar a página
+        window.addEventListener('DOMContentLoaded', () => {
+            sessionInput.value = currentSession;
+            sessionBadge.textContent = currentSession;
+            applyUrls(currentSession);
+            setLayout(currentLayout, false);
+            requestWakeLock(); // Tenta ativar Wake Lock automaticamente
+        });
+
+        // Reativa o Wake Lock caso o usuário minimize e volte para a aba
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible' && isWakeLockActive) {
+                await requestWakeLock();
+            }
+        });
+
+        // Constrói e aplica as URLs nos iframes
+        function applyUrls(sessionId) {
+            const cleanId = encodeURIComponent(sessionId.trim());
+            const alertsUrl = `https://socialstream.ninja/multi-alerts.html?session=${cleanId}&ln=en-us`;
+            const chatUrl = `https://socialstream.ninja/dock.html?session=${cleanId}&ln=en-us`;
+
+            alertsFrame.src = alertsUrl;
+            chatFrame.src = chatUrl;
+        }
+
+        // Atualiza a Session ID
+        function updateSession() {
+            const newId = sessionInput.value.trim();
+            if (!newId) {
+                showToast('Digite uma Session ID válida', 'fa-triangle-exclamation text-amber-400');
+                return;
+            }
+            currentSession = newId;
+            localStorage.setItem('ssn_session_id', currentSession);
+            sessionBadge.textContent = currentSession;
+            applyUrls(currentSession);
+            toggleMenu(false);
+            showToast(`Sessão atualizada: ${currentSession}`, 'fa-check text-emerald-400');
+        }
+
+        // Recarrega ambos os iframes
+        function reloadFrames() {
+            applyUrls(currentSession);
+            showToast('Recarregando Chat e Alertas...', 'fa-rotate-right text-indigo-400');
+        }
+
+        // Alterna o menu expansível de configurações
+        function toggleMenu(forceState = null) {
+            isMenuOpen = forceState !== null ? forceState : !isMenuOpen;
+            if (isMenuOpen) {
+                expandedControls.classList.remove('hidden');
+            } else {
+                expandedControls.classList.add('hidden');
+            }
+        }
+
+        // Oculta ou exibe toda a barra superior para máximo aproveitamento de tela
+        function toggleHeaderVisibility() {
+            isHeaderHidden = !isHeaderHidden;
+            const icon = document.getElementById('immersive-icon');
+            if (isHeaderHidden) {
+                controlBar.classList.add('hidden');
+                icon.className = 'fa-solid fa-eye text-xs text-indigo-400';
+                showToast('Barra oculta. Toque no olho no canto para voltar.', 'fa-eye-slash text-gray-300');
+            } else {
+                controlBar.classList.remove('hidden');
+                icon.className = 'fa-solid fa-eye-slash text-xs';
+            }
+        }
+
+        // Alterna proporção entre Alertas e Chat
+        function setLayout(mode, notify = true) {
+            currentLayout = mode;
+            localStorage.setItem('ssn_layout', mode);
+
+            // Atualiza estilo dos botões
+            document.querySelectorAll('.layout-btn').forEach(btn => {
+                if (btn.dataset.layout === mode) {
+                    btn.className = 'layout-btn py-2 px-2 rounded-lg text-xs font-medium bg-indigo-600 text-white border border-indigo-500 transition';
+                } else {
+                    btn.className = 'layout-btn py-2 px-2 rounded-lg text-xs font-medium bg-gray-800 text-gray-300 border border-gray-700 hover:bg-gray-700 transition';
+                }
+            });
+
+            // Reseta classes de visibilidade e tamanho
+            alertsPane.classList.remove('hidden');
+            chatPane.classList.remove('hidden');
+
+            if (mode === '30-70') {
+                alertsPane.style.flex = '0 0 30%';
+                chatPane.style.flex = '1 1 70%';
+            } else if (mode === '50-50') {
+                alertsPane.style.flex = '0 0 50%';
+                chatPane.style.flex = '1 1 50%';
+            } else if (mode === '0-100') {
+                alertsPane.classList.add('hidden');
+                chatPane.style.flex = '1 1 100%';
+            } else if (mode === '100-0') {
+                chatPane.classList.add('hidden');
+                alertsPane.style.flex = '1 1 100%';
+            }
+
+            if (notify) {
+                const labels = {
+                    '30-70': '30% Alertas / 70% Chat',
+                    '50-50': '50% Alertas / 50% Chat',
+                    '0-100': 'Tela cheia: Apenas Chat',
+                    '100-0': 'Tela cheia: Apenas Alertas'
+                };
+                showToast(`Layout: ${labels[mode]}`, 'fa-table-columns text-indigo-400');
+            }
+        }
+
+        // Gerenciamento da Screen Wake Lock API (Impede a tela do celular de apagar)
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    isWakeLockActive = true;
+                    updateWakeLockUI(true);
+                    wakeLock.addEventListener('release', () => {
+                        updateWakeLockUI(false);
+                    });
+                } catch (err) {
+                    console.warn('Wake Lock não permitido:', err.message);
+                    updateWakeLockUI(false);
+                }
+            }
+        }
+
+        async function toggleWakeLock() {
+            if (!('wakeLock' in navigator)) {
+                showToast('Seu navegador não suporta bloqueio de tela', 'fa-circle-xmark text-red-400');
+                return;
+            }
+
+            if (isWakeLockActive && wakeLock) {
+                await wakeLock.release();
+                wakeLock = null;
+                isWakeLockActive = false;
+                updateWakeLockUI(false);
+                showToast('Bloqueio de tela desativado', 'fa-moon text-gray-400');
+            } else {
+                await requestWakeLock();
+                if (isWakeLockActive) {
+                    showToast('Tela mantida ligada continuamente', 'fa-sun text-amber-400');
+                }
+            }
+        }
+
+        function updateWakeLockUI(active) {
+            const btn = document.getElementById('btn-wakelock');
+            const icon = document.getElementById('wakelock-icon');
+            if (active) {
+                btn.classList.replace('bg-gray-800/80', 'bg-amber-500/20');
+                btn.classList.add('border', 'border-amber-500/40');
+                icon.className = 'fa-solid fa-sun text-amber-400';
+            } else {
+                btn.classList.replace('bg-amber-500/20', 'bg-gray-800/80');
+                btn.classList.remove('border', 'border-amber-500/40');
+                icon.className = 'fa-solid fa-moon text-gray-400';
+            }
+        }
+
+        // Sistema de Toast discreto
+        let toastTimeout;
+        function showToast(message, iconClass = 'fa-circle-info text-indigo-400') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-msg');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMsg.textContent = message;
+            toastIcon.className = `fa-solid ${iconClass}`;
+
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
